@@ -18,6 +18,7 @@ namespace Reproductor
 
         private int cantidadMuestrasTransucrridas = 0;
         private int cantidadMuestrasGuardadas = 0;
+        private int cantidadMuestrasBorradas = 0;
 
         public EfectoDelay(ISampleProvider fuente, int offsetMiliSegundos)
         {
@@ -38,7 +39,37 @@ namespace Reproductor
         public int Read(float[] buffer, int offset, int count)
         {
             int read = fuente.Read(buffer, offset, count);
+            //calculo de tiempo
+            float milisegundosTranscurridos =
+                ((float)(cantidadMuestrasTranscurridas) / (float)(fuente.WaveFormat.SampleRate * (fuente.WaveFormat.Channels)) * 1000.0f;
+            int numeroMuestrasOffset = (int)((offsetMiliSegundos / 1000.0f) * (float)fuente.WaveFormat.SampleRate);
 
+            //Llenar el buffer
+            for (int i-0; i<read; int++)
+            {
+                muestras.Add(buffer[i + offset]);
+            }
+            //Si el buffer se excede de tamaño, ajustar el numero de elementos
+            if(muestras.Count > tamañoBuffer)
+            {
+                //Eliminar excedente
+                int diferencia = muestras.Count - tamañoBuffer;
+                muestras.RemoveRange(0, diferencia);
+                cantidadMuestrasBorradas += diferencia;
+            }
+
+            //Aplicar el efecto
+            if (milisegundosTranscurridos > offsetMiliSegundos)
+            {
+                for (int i=0; i<read; i++)
+                {
+                    buffer[i + offset] +=
+                        muestras[(cantidadMuestrasTransucrridas - cantidadMuestrasBorradas) + i - numeroMuestrasOffset];
+                }
+            }
+
+
+            cantidadMuestrasTransucrridas += read;
             return read;
         }
 
