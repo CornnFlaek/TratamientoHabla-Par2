@@ -23,14 +23,14 @@ using System.Windows.Threading;
 namespace Reproductor
 {
 
-    
+
 
     /// <summary>
     /// Lógica de interacción para MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
-        
+
         DispatcherTimer timer;
 
         //Lector de archivos
@@ -43,6 +43,7 @@ namespace Reproductor
         //VolumeSampleProvider volume;
         EfectoVolumen efectoVolumen;
         EfectoFadeIn efectoFadeIn;
+        EfectoFadeOut efectoFadeOut;
         EfectoDelay efectoDelay;
 
         public MainWindow()
@@ -58,34 +59,29 @@ namespace Reproductor
                 TimeSpan.FromMilliseconds(500);
             timer.Tick += Timer_Tick;
 
-            
+
         }
 
         private void Timer_Tick(object sender, EventArgs e)
         {
-            if (efectoFadeIn != null)
-            {
-                /*lblMuestras.Text =
-                    efectoFadeIn.segundosTranscurridos.ToString();*/
-                  
-            }
+
             lblTiempoActual.Text =
                 reader.CurrentTime.ToString().
                 Substring(0, 8);
 
             if (!dragging)
             {
-                sldTiempo.Value = 
+                sldTiempo.Value =
                     reader.CurrentTime.TotalSeconds;
             }
-            
+
 
         }
 
         void ListarDispositivosSalida()
         {
             cbDispositivoSalida.Items.Clear();
-            for(int i=0; i < WaveOut.DeviceCount; i++)
+            for (int i = 0; i < WaveOut.DeviceCount; i++)
             {
                 WaveOutCapabilities capacidades =
                     WaveOut.GetCapabilities(i);
@@ -97,7 +93,7 @@ namespace Reproductor
 
         private void btnExaminar_Click(object sender, RoutedEventArgs e)
         {
-            
+
             OpenFileDialog openFileDialog =
                 new OpenFileDialog();
             if (openFileDialog.ShowDialog() == true)
@@ -112,7 +108,7 @@ namespace Reproductor
         private void btnReproducir_Click(object sender, RoutedEventArgs e)
         {
 
-            if (output != null && 
+            if (output != null &&
                 output.PlaybackState == PlaybackState.Paused)
             {
                 // retomo reproduccion
@@ -120,7 +116,8 @@ namespace Reproductor
                 btnReproducir.IsEnabled = false;
                 btnPausa.IsEnabled = true;
                 btnDetener.IsEnabled = true;
-            } else
+            }
+            else
             {
                 if (txtRutaArchivo.Text != null &&
                 txtRutaArchivo.Text != string.Empty)
@@ -135,14 +132,23 @@ namespace Reproductor
                     volume.Volume =
                         (float)(sldVolumen.Value);*/
 
-                    efectoDelay = new EfectoDelay(reader, (int)(sldOffsetDelay.Value));
+                    efectoDelay =
+                        new EfectoDelay(reader,
+                            (int)(sldOffsetDelay.Value));
 
-                    efectoFadeIn = 
-                        new EfectoFadeIn(reader,20.0f);
+                    efectoFadeIn =
+                        new EfectoFadeIn(efectoDelay,
+                            float.Parse(txtFadeInDuracion.Text));
 
-                    efectoVolumen = new EfectoVolumen(efectoFadeIn);
+                    efectoFadeOut =
+                        new EfectoFadeOut(efectoFadeIn,
+                            float.Parse(txtFadeOutInicio.Text),
+                            float.Parse(txtFadeOutDuracion.Text));
+
+                    efectoVolumen = new EfectoVolumen(efectoFadeOut);
                     efectoVolumen.Volumen =
                         (float)(sldVolumen.Value);
+
 
                     output = new WaveOut();
                     output.DeviceNumber =
@@ -173,7 +179,7 @@ namespace Reproductor
                 }
             }
 
-            
+
         }
 
         private void Output_PlaybackStopped(object sender, StoppedEventArgs e)
@@ -181,7 +187,7 @@ namespace Reproductor
             timer.Stop();
             reader.Dispose();
             output.Dispose();
-            
+
         }
 
         private void btnDetener_Click(object sender, RoutedEventArgs e)
@@ -227,11 +233,10 @@ namespace Reproductor
         private void sldVolumen_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             if (output != null &&
-                output.PlaybackState != 
+                output.PlaybackState !=
                 PlaybackState.Stopped)
             {
-                efectoVolumen.Volumen =
-                    (float)(sldVolumen.Value);
+                efectoVolumen.Volumen = (float)(sldVolumen.Value);
                 /*output.Volume =
                     (float)(sldVolumen.Value);*/
                 /*volume.Volume =
@@ -239,9 +244,21 @@ namespace Reproductor
             }
         }
 
-        private void SldOffsetDelay_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        private void sldOffsetDelay_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             lblOffsetDelay.Text = ((int)(sldOffsetDelay.Value)).ToString();
+            if (efectoDelay != null)
+            {
+                efectoDelay.OffsetMiliSegundos = (int)(sldOffsetDelay.Value);
+            }
+        }
+
+        private void SldGananciaDelay_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if(lblGananciaDelay != null)
+            {
+                lblGananciaDelay.Text = sldGananciaDelay.Value.ToString("N");
+            }
         }
     }
 }
