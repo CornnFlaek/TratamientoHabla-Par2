@@ -134,7 +134,7 @@ namespace Reproductor
 
                     efectoDelay =
                         new EfectoDelay(reader,
-                            (int)(sldOffsetDelay.Value));
+                            (int)(sldOffsetDelay.Value), (float)(sldOffsetDelay.Value));
 
                     efectoFadeIn =
                         new EfectoFadeIn(efectoDelay,
@@ -258,6 +258,10 @@ namespace Reproductor
             if(lblGananciaDelay != null)
             {
                 lblGananciaDelay.Text = sldGananciaDelay.Value.ToString("N");
+                if(efectoDelay != null)
+                {
+                    efectoDelay.Ganancia = (float)(sldGananciaDelay.Value);
+                }
             }
         }
     }
